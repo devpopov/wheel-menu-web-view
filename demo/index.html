@@ -2,13 +2,41 @@
 <html>
 	<head>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.js"></script>
-		<script src="../src/wheel-menu.js"></script>
+		<script src="../src/js/wheel-menu.js"></script>
+		<link rel="stylesheet" href="main.css">
 	</head>
 	<body>
 		<div id="content">
 		</div>
 		<script>
-			var bla = WheelMenu($("#content"),{test: "test"});
+			$('#content').wheelMenu({
+				data: [
+					{
+						id: 0,
+						text: "About moves"
+					},
+					{
+						id: 1,
+						text: "About wolfes"
+					},
+					{
+						id: 2,
+						text: "About mobilekillers"
+					},
+					{
+						id: 3,
+						text: "About life"
+					},
+					{
+						id: 4,
+						text: "About speakers"
+					},
+					{
+						id: 5,
+						text: "About something"
+					}
+				]
+			});
 		</script>
 	</body>
 </html>
