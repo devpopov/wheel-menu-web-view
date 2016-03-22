@@ -131,9 +131,24 @@
 			scale = 1.2 - Math.abs(scale); 
         });
     }
+	
+	
+	
 
     WheelMenu.prototype.events = function() {
         var self = this;
+		
+		function applyAcceleration() {
+			if( !self.needToRotate && self.currentSpeed > 0.0) {
+				self.currentSpeed -= 0.001;
+				var circleInc = self.rotateLastDir * (8.5 / 360.0);
+				self.currentRadians += (circleInc * self.currentSpeed * 100);
+				self.refresh();
+			}
+			setTimeout(applyAcceleration, 25);
+		}
+		applyAcceleration();
+		
 
         self.container.children("div").mousedown( function(e_up) {
             var mx = e_up.pageX;
@@ -188,6 +203,7 @@
 			
 			if(rotateNewDir == self.rotateLastDir) {
 				var circleInc = self.rotateLastDir * (8.5 / 360.0);
+				self.currentSpeed = Math.abs(circleInc);
 				self.currentRadians += circleInc;
 				self.refresh();
 				self.rotateLastPoint[0] = mmx;
