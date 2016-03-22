@@ -57,6 +57,13 @@
 
         this.calculateMetrics();
 
+        this.currentPos = [
+                this.containerMiddlePoint[0],
+                this.containerMiddlePoint[1]
+            ];
+
+        this.currentRadians = 0;
+
         this.refresh();
 
         this.events();
@@ -76,19 +83,19 @@
     WheelMenu.prototype.refresh = function() {
         var self = this;
 
+        var radians = this.currentRadians;
+
         var circleInc = (2 * Math.PI) / this.data.length;
 
         var startPosition = [
-                this.containerMiddlePoint[0],
-                this.containerMiddlePoint[1]
+                this.currentPos[0],
+                this.currentPos[1]
             ];
 
         var nextPosition = [
-                startPosition[0] + this.radius,
-                startPosition[1]
+                startPosition[0] + (Math.cos(radians) * self.radius),
+                startPosition[1] + (Math.sin(radians) * self.radius)
             ];
-
-        var radians = 0;
 
         this.container.children("div").each(function() {
             $(this).height(self.segmentSelectedSize[0]);
@@ -100,10 +107,6 @@
             });
 
             radians += circleInc;
-
-            if (radians > self.maxRadians) {
-                radians -= self.maxRadians;
-            }
 
             nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.radius);
             nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.radius);
@@ -131,6 +134,12 @@
                     (mmx > mx && mmy < my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]))
                 {
                     console.log("clockwise");
+
+                    var circleInc = 10 / 360;
+
+                    self.currentRadians += circleInc;
+
+                    self.refresh();
                 }
                 else if ((mmx < mx && mmy == my && mmy < self.containerMiddlePoint[1]) ||
                     (mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
@@ -141,6 +150,12 @@
                     (mmx == mx && mmy > my && mmx < self.containerMiddlePoint[0]) ||
                     (mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0])) {
                     console.log("counterclockwise");
+
+                    var circleInc = 10 / 360;
+
+                    self.currentRadians -= circleInc;
+
+                    self.refresh();
                 }
 
                 mx = mmx;
