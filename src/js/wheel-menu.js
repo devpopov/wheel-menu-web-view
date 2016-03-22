@@ -23,7 +23,7 @@
     WheelMenu.defaults = {
         position: "left",
         radius: 250,
-        background: "blue",
+        background: "green",
         data: [],
         segmentCss: ""
     }
@@ -44,6 +44,57 @@
             height: this.radius * 2.0,
             width: this.radius * 2.0,
             background: this.background
+        });
+
+        this.containerPosition = [this.container.offset().left, this.container.offset().top]
+
+        this.containerMiddlePoint = [
+                (this.containerPosition[0] + this.container.width()) / 2.0,
+                (this.containerPosition[1] + this.container.height()) / 2.0
+            ]
+
+        this.events();
+    }
+
+    WheelMenu.prototype.events = function() {
+        var self = this;
+
+        this.container.mousedown( function(e_up) {
+            var mx = e_up.pageX;
+            var my = e_up.pageY;
+
+            $(this).mousemove(function(e_move) {
+                var mmx = e_move.pageX;
+                var mmy = e_move.pageY;
+
+                if((mmx > mx && mmy == my && mmy < self.containerMiddlePoint[1]) ||
+                    (mmx > mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
+                    (mmx == mx && mmy > my && mmx > self.containerMiddlePoint[0]) ||
+                    (mmx < mx && mmy > my && mmy > self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
+                    (mmx < mx && mmy == my && mmy > self.containerMiddlePoint[1]) ||
+                    (mmx < mx && mmy < my && mmy > self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]) ||
+                    (mmx == mx && mmy < my && mmx < self.containerMiddlePoint[0]) ||
+                    (mmx > mx && mmy < my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]))
+                {
+                    console.log("clockwise");
+                }
+                else if ((mmx < mx && mmy == my && mmy < self.containerMiddlePoint[1]) ||
+                    (mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
+                    (mmx == mx && mmy < my && mmx > self.containerMiddlePoint[0]) ||
+                    (mmx > mx && mmy < my && mmy > self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
+                    (mmx > mx && mmy == my && mmy > self.containerMiddlePoint[1]) ||
+                    (mmx > mx && mmy > my && mmy > self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]) ||
+                    (mmx == mx && mmy > my && mmx < self.containerMiddlePoint[0]) ||
+                    (mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0])) {
+                    console.log("counterclockwise");
+                }
+
+                mx = mmx;
+                my = mmy;
+            });
+        });     
+        this.container.mouseup(function(){
+            $(this).unbind("mousemove");
         });
     }
 
