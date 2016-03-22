@@ -73,8 +73,8 @@
         this.containerPosition = [this.container.offset().left, this.container.offset().top]
 
         this.containerMiddlePoint = [
-            (this.containerPosition[0] + this.container.width()) / 2.0,
-            (this.containerPosition[1] + this.container.height()) / 2.0
+            this.containerPosition[0] + this.container.width() / 2.0,
+            this.containerPosition[1] + this.container.height() / 2.0
         ];
 
         this.segmentSelectedSize = [this.container.height() * 0.06, this.container.width() * 0.3];
