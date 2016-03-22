@@ -50,13 +50,15 @@
         var self = this;
 
         this.container.removeAttr('id class style');
-        this.container.attr('id', 'wheelMenu');
+        this.container.attr('id', 'wheel-menu');
 
         this.container.css({
             height: this.radius * 2.0,
             width: this.radius * 2.0,
             background: this.background
         });
+
+        this.container.append("<div class=\"wheel-menu-transparent\"></div>");
 
         this.data.map(function(value) {
             self.container.append("<div class=\"" + self.segmentCss + "\" id=\"" + value['id'] + "\">" + value['text'] + "</div>");
