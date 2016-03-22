@@ -81,7 +81,8 @@
 
         this.refresh();
 
-        this.events();
+        if (this.container.children("." + this.segmentCss).length != 1)
+            this.events();
     }
 
     WheelMenu.prototype.calculateMetrics = function () {
@@ -98,8 +99,23 @@
     WheelMenu.prototype.refresh = function() {
         var self = this;
 
+
+        if(this.currentRadians > self.maxRadians) {
+            this.currentRadians = this.currentRadians - self.maxRadians;
+        }
+        else if (this.currentRadians < -self.maxRadians) {
+            this.currentRadians = this.currentRadians + self.maxRadians;
+        }
+
+        if(this.currentRadians > 1.5708 && this.currentRadians < 4.71239) {
+            this.currentRadians = (this.currentRadians - 1.5708) + 4.71239;
+        }
+        else if (this.currentRadians < -this.currentRadians) {
+            this.currentRadians = this.currentRadians + self.maxRadians;
+        }
+
         var radians = this.currentRadians;
-        var circleInc = (2 * Math.PI) / this.data.length;
+        var circleInc = (2 * Math.PI) / 8;//this.data.length;
 		
         var startPosition = [
                 this.currentPos[0],
@@ -113,11 +129,17 @@
 		
 		var scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.insideRadius)) - (startPosition[1] + (Math.sin(radians) * self.insideRadius))) / (self.radius*2.0);
 		scale = 1.2 - Math.abs(scale); 
-		console.log(scale);
+		
 		//scale = 1;
-			
 
         this.container.children("." + this.segmentCss).each(function() {
+            if(radians > self.maxRadians) {
+                radians = radians - self.maxRadians;
+            }
+            else if (radians < -self.maxRadians) {
+                radians = radians + self.maxRadians;
+            }
+
             $(this).height(self.segmentSelectedSize[0]);
             $(this).width(self.segmentSelectedSize[1]);
 
@@ -131,7 +153,22 @@
 				'transform'         : 'scale(' + scale + ')'
             });
 
+            //console.log(radians);
+
+            console.log(radians);
+
             radians += circleInc;
+
+            //if(radians > 1.5708 && radians < -1.5708) {
+                
+            //}
+
+            if(radians > 1.5708 && radians < 4.71239) {
+                radians = (radians - 1.5708) + 4.71239;
+            }
+            else if(radians < -1.5708 && radians > -4.71239) {
+                radians = (radians + 1.5708) - 4.71239;
+            }
 			
             nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.insideRadius);
             nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.insideRadius);
