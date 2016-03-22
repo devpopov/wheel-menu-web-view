@@ -4,12 +4,15 @@
     function WheelMenu(container, params) {
         this.container = container;
 
+        this.maxRadians = 2.0 * Math.PI;
+        this.selectedSegment = 0;
+
         var self = this;
 
         $.each(WheelMenu.params, function(key, value) {
             if(key in params) {
                 if (typeof params[key] == value) {
-                    self[key] = value;
+                    self[key] = params[key];
                 }
             }
             else {
@@ -37,6 +40,8 @@
     }
 
     WheelMenu.prototype.init = function() {
+        var self = this;
+
         this.container.removeAttr('id class style');
         this.container.attr('id', 'wheelMenu');
 
@@ -46,14 +51,63 @@
             background: this.background
         });
 
+        this.data.map(function(value) {
+            self.container.append("<div class=\"" + self.segmentCss + "\" id=\"" + value['id'] + "\">" + value['text'] + "</div>");
+        });
+
+        this.calculateMetrics();
+
+        this.refresh();
+
+        this.events();
+    }
+
+    WheelMenu.prototype.calculateMetrics = function () {
         this.containerPosition = [this.container.offset().left, this.container.offset().top]
 
         this.containerMiddlePoint = [
-                (this.containerPosition[0] + this.container.width()) / 2.0,
-                (this.containerPosition[1] + this.container.height()) / 2.0
-            ]
+            (this.containerPosition[0] + this.container.width()) / 2.0,
+            (this.containerPosition[1] + this.container.height()) / 2.0
+        ];
 
-        this.events();
+        this.segmentSelectedSize = [this.container.height() * 0.06, this.container.width() * 0.3];
+    }
+
+    WheelMenu.prototype.refresh = function() {
+        var self = this;
+
+        var circleInc = (2 * Math.PI) / this.data.length;
+
+        var startPosition = [
+                this.containerMiddlePoint[0],
+                this.containerMiddlePoint[1]
+            ];
+
+        var nextPosition = [
+                startPosition[0] + this.radius,
+                startPosition[1]
+            ];
+
+        var radians = 0;
+
+        this.container.children("div").each(function() {
+            $(this).height(self.segmentSelectedSize[0]);
+            $(this).width(self.segmentSelectedSize[1]);
+
+            $(this).css({
+                'left': nextPosition[0],
+                'top': nextPosition[1]
+            });
+
+            radians += circleInc;
+
+            if (radians > self.maxRadians) {
+                radians -= self.maxRadians;
+            }
+
+            nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.radius);
+            nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.radius);
+        });
     }
 
     WheelMenu.prototype.events = function() {
@@ -96,10 +150,6 @@
         this.container.mouseup(function(){
             $(this).unbind("mousemove");
         });
-    }
-
-    WheelMenu.prototype.calculateSizes = function () {
-        
     }
 
     WheelMenu.prototype.generateElements = function() {

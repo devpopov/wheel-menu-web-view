@@ -5,8 +5,12 @@ html, body {
     margin: 0;
 }
 
-#content {
-	background: green;
-	height: 80%;
-	width: 40%;
+.segment {
+	background: yellow;
+	position: absolute;
+	text-align: center;
+}
+
+#wheelMenu {
+
 }
