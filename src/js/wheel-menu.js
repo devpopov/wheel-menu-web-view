@@ -6,6 +6,11 @@
 
         this.maxRadians = 2.0 * Math.PI;
         this.selectedSegment = 0;
+		
+		this.currentSpeed = 0.0;
+		this.needToRotate = false;
+		this.rotateLastPoint = [0,0];
+		this.rotateLastDir = -1;
 
         var self = this;
 
@@ -28,7 +33,8 @@
         radius: 250,
         background: "green",
         data: [],
-        segmentCss: ""
+        segmentCss: "",
+		placeholderAngle: Math.PI - Math.PI/9.0
     }
 
     WheelMenu.params = {
@@ -36,7 +42,8 @@
         radius: "number",
         background: "string",
         data: "object",
-        segmentCss: "string"
+        segmentCss: "string",
+		placeholderAngle: "number"
     }
 
     WheelMenu.prototype.init = function() {
@@ -84,9 +91,8 @@
         var self = this;
 
         var radians = this.currentRadians;
-
         var circleInc = (2 * Math.PI) / this.data.length;
-
+		
         var startPosition = [
                 this.currentPos[0],
                 this.currentPos[1]
@@ -96,6 +102,12 @@
                 startPosition[0] + (Math.cos(radians) * self.radius),
                 startPosition[1] + (Math.sin(radians) * self.radius)
             ];
+		
+		var scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.radius)) - (startPosition[1] + (Math.sin(radians) * self.radius))) / (self.radius*2.0);
+		scale = 1.2 - Math.abs(scale); 
+		console.log(scale);
+		//scale = 1;
+			
 
         this.container.children("div").each(function() {
             $(this).height(self.segmentSelectedSize[0]);
@@ -103,67 +115,91 @@
 
             $(this).css({
                 'left': nextPosition[0],
-                'top': nextPosition[1]
+                'top': nextPosition[1],
+				'-webkit-transform' : 'scale(' + scale + ')',
+				'-moz-transform'    : 'scale(' + scale + ')',
+				'-ms-transform'     : 'scale(' + scale + ')',
+				'-o-transform'      : 'scale(' + scale + ')',
+				'transform'         : 'scale(' + scale + ')'
             });
 
             radians += circleInc;
-
+			
             nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.radius);
             nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.radius);
+			scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.radius)) - (startPosition[1] + (Math.sin(radians) * self.radius))) / (self.radius*2.0);
+			scale = 1.2 - Math.abs(scale); 
         });
     }
 
     WheelMenu.prototype.events = function() {
         var self = this;
 
-        this.container.mousedown( function(e_up) {
+        self.container.children("div").mousedown( function(e_up) {
             var mx = e_up.pageX;
             var my = e_up.pageY;
-
-            $(this).mousemove(function(e_move) {
-                var mmx = e_move.pageX;
-                var mmy = e_move.pageY;
-
-                if((mmx > mx && mmy == my && mmy < self.containerMiddlePoint[1]) ||
-                    (mmx > mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
-                    (mmx == mx && mmy > my && mmx > self.containerMiddlePoint[0]) ||
-                    (mmx < mx && mmy > my && mmy > self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
-                    (mmx < mx && mmy == my && mmy > self.containerMiddlePoint[1]) ||
-                    (mmx < mx && mmy < my && mmy > self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]) ||
-                    (mmx == mx && mmy < my && mmx < self.containerMiddlePoint[0]) ||
-                    (mmx > mx && mmy < my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]))
-                {
-                    console.log("clockwise");
-
-                    var circleInc = 10 / 360;
-
-                    self.currentRadians += circleInc;
-
-                    self.refresh();
-                }
-                else if ((mmx < mx && mmy == my && mmy < self.containerMiddlePoint[1]) ||
-                    (mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
-                    (mmx == mx && mmy < my && mmx > self.containerMiddlePoint[0]) ||
-                    (mmx > mx && mmy < my && mmy > self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
-                    (mmx > mx && mmy == my && mmy > self.containerMiddlePoint[1]) ||
-                    (mmx > mx && mmy > my && mmy > self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]) ||
-                    (mmx == mx && mmy > my && mmx < self.containerMiddlePoint[0]) ||
-                    (mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0])) {
-                    console.log("counterclockwise");
-
-                    var circleInc = 10 / 360;
-
-                    self.currentRadians -= circleInc;
-
-                    self.refresh();
-                }
-
-                mx = mmx;
-                my = mmy;
-            });
+			self.rotateLastPoint[0] = e_up.pageX;
+			self.rotateLastPoint[1] = e_up.pageY;
+			self.needToRotate = true;
         });     
-        this.container.mouseup(function(){
-            $(this).unbind("mousemove");
+		
+		$(document).mousemove(function(e_move) {
+			if(!self.needToRotate) {
+				return;
+			}
+			var mmx = e_move.pageX;
+			var mmy = e_move.pageY;
+			var mx = self.rotateLastPoint[0];
+            var my = self.rotateLastPoint[1];
+			var rotateNewDir = 0;
+			if(mmy - my > 0.0) {
+				rotateNewDir = 1;
+				
+			} else {
+				rotateNewDir = -1;
+			}
+
+			if((mmx > mx && mmy == my && mmy < self.containerMiddlePoint[1]) ||
+				(mmx > mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
+				(mmx == mx && mmy > my && mmx > self.containerMiddlePoint[0]) ||
+				(mmx < mx && mmy > my && mmy > self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
+				(mmx < mx && mmy == my && mmy > self.containerMiddlePoint[1]) ||
+				(mmx < mx && mmy < my && mmy > self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]) ||
+				(mmx == mx && mmy < my && mmx < self.containerMiddlePoint[0]) ||
+				(mmx > mx && mmy < my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]))
+			{
+
+				
+
+			}
+			else if ((mmx < mx && mmy == my && mmy < self.containerMiddlePoint[1]) ||
+				(mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
+				(mmx == mx && mmy < my && mmx > self.containerMiddlePoint[0]) ||
+				(mmx > mx && mmy < my && mmy > self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
+				(mmx > mx && mmy == my && mmy > self.containerMiddlePoint[1]) ||
+				(mmx > mx && mmy > my && mmy > self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]) ||
+				(mmx == mx && mmy > my && mmx < self.containerMiddlePoint[0]) ||
+				(mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0])) {
+
+			
+
+	
+			}
+			
+			if(rotateNewDir == self.rotateLastDir) {
+				var circleInc = self.rotateLastDir * (8.5 / 360.0);
+				self.currentRadians += circleInc;
+				self.refresh();
+				self.rotateLastPoint[0] = mmx;
+				self.rotateLastPoint[1] = mmy;
+			}
+
+			self.rotateLastDir = rotateNewDir;
+
+		});
+		
+        $(document).mouseup(function(){
+            self.needToRotate = false;
         });
     }
 
