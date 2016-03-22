@@ -58,7 +58,11 @@
             background: this.background
         });
 
-        this.container.append("<div class=\"wheel-menu-transparent\"></div>");
+        this.container.append("<div id=\"wheel-menu-transparent\"></div>");
+
+        $('#wheel-menu-transparent').height(this.container.height());
+        $('#wheel-menu-transparent').width(this.container.width() / 3);
+
 
         this.data.map(function(value) {
             self.container.append("<div class=\"" + self.segmentCss + "\" id=\"" + value['id'] + "\">" + value['text'] + "</div>");
@@ -70,6 +74,8 @@
                 this.containerMiddlePoint[0],
                 this.containerMiddlePoint[1]
             ];
+
+        this.insideRadius = this.radius - this.radius * 0.15;
 
         this.currentRadians = 0;
 
@@ -101,17 +107,17 @@
             ];
 
         var nextPosition = [
-                startPosition[0] + (Math.cos(radians) * self.radius),
-                startPosition[1] + (Math.sin(radians) * self.radius)
+                startPosition[0] + (Math.cos(radians) * self.insideRadius),
+                startPosition[1] + (Math.sin(radians) * self.insideRadius)
             ];
 		
-		var scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.radius)) - (startPosition[1] + (Math.sin(radians) * self.radius))) / (self.radius*2.0);
+		var scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.insideRadius)) - (startPosition[1] + (Math.sin(radians) * self.insideRadius))) / (self.radius*2.0);
 		scale = 1.2 - Math.abs(scale); 
 		console.log(scale);
 		//scale = 1;
 			
 
-        this.container.children("div").each(function() {
+        this.container.children("." + this.segmentCss).each(function() {
             $(this).height(self.segmentSelectedSize[0]);
             $(this).width(self.segmentSelectedSize[1]);
 
@@ -127,9 +133,9 @@
 
             radians += circleInc;
 			
-            nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.radius);
-            nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.radius);
-			scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.radius)) - (startPosition[1] + (Math.sin(radians) * self.radius))) / (self.radius*2.0);
+            nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.insideRadius);
+            nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.insideRadius);
+			scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.insideRadius)) - (startPosition[1] + (Math.sin(radians) * self.insideRadius))) / (self.radius*2.0);
 			scale = 1.2 - Math.abs(scale); 
         });
     }
