@@ -98,6 +98,7 @@
 
     WheelMenu.prototype.refresh = function() {
         var self = this;
+        var circleInc = (2 * Math.PI) / 8;//this.data.length;
 
 
         if(this.currentRadians > self.maxRadians) {
@@ -107,15 +108,14 @@
             this.currentRadians = this.currentRadians + self.maxRadians;
         }
 
-        if(this.currentRadians > 1.5708 && this.currentRadians < 4.71239) {
-            this.currentRadians = (this.currentRadians - 1.5708) + 4.71239;
+        if(this.currentRadians > 1.5708 && this.currentRadians < 4.71239 - circleInc) {
+            this.currentRadians = (this.currentRadians - 1.5708) + 4.71239 - circleInc;
         }
-        else if (this.currentRadians < -this.currentRadians) {
-            this.currentRadians = this.currentRadians + self.maxRadians;
-        }
+        /*else if (this.currentRadians < -1.5708 && this.currentRadians > -4.71239 - circleInc) {
+            this.currentRadians = (this.currentRadians + 1.5708) - 4.71239 - circleInc;
+        }*/
 
         var radians = this.currentRadians;
-        var circleInc = (2 * Math.PI) / 8;//this.data.length;
 		
         var startPosition = [
                 this.currentPos[0],
@@ -155,19 +155,19 @@
 
             //console.log(radians);
 
-            console.log(radians);
-
             radians += circleInc;
 
             //if(radians > 1.5708 && radians < -1.5708) {
                 
             //}
 
-            if(radians > 1.5708 && radians < 4.71239) {
-                radians = (radians - 1.5708) + 4.71239;
+            if(radians > 1.5708 && radians < 4.71239 - circleInc) {
+                radians = (radians - 1.5708) + 4.71239 - circleInc;
             }
-            else if(radians < -1.5708 && radians > -4.71239) {
-                radians = (radians + 1.5708) - 4.71239;
+            else if(radians < -1.5708 - circleInc  && radians > -4.71239) {
+                //console.log((radians - (-1.5708 - circleInc)) + -4.71239);
+                //radians = (radians - (-1.5708 - circleInc)) + -4.71239;
+                console.log("YEP");
             }
 			
             nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.insideRadius);
@@ -195,7 +195,7 @@
 		applyAcceleration();
 		
 
-        self.container.children("div").mousedown( function(e_up) {
+        self.container.children("div").bind("mousedown touchstart", function(e_up) {
             var mx = e_up.pageX;
             var my = e_up.pageY;
 			self.rotateLastPoint[0] = e_up.pageX;
@@ -203,12 +203,25 @@
 			self.needToRotate = true;
         });     
 		
-		$(document).mousemove(function(e_move) {
+		$(document).bind("mousemove touchmove", function(e_move) {
 			if(!self.needToRotate) {
 				return;
 			}
-			var mmx = e_move.pageX;
-			var mmy = e_move.pageY;
+
+            var mmx = 0;
+            var mmy = 0;
+
+            if(e_move.type == "mousemove")
+            {
+                mmx = e_move.pageX;
+                mmy = e_move.pageY;
+            }
+            else {
+                var target = e_move.originalEvent.targetTouches[0];
+                mmx = target.pageX;
+                mmy = target.pageY;
+            }
+
 			var mx = self.rotateLastPoint[0];
             var my = self.rotateLastPoint[1];
 			var rotateNewDir = 0;
@@ -259,7 +272,7 @@
 
 		});
 		
-        $(document).mouseup(function(){
+        $(document).bind("mouseup touchend", function(){
             self.needToRotate = false;
         });
     }
