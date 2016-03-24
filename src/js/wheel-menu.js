@@ -1,3 +1,11 @@
+function toDegrees (angle) {
+  return angle * (180 / Math.PI);
+}
+
+function toRadians (angle) {
+  return angle * (Math.PI / 180);
+}
+
 (function($, window) {
     var o = null;
 
@@ -100,20 +108,24 @@
         var self = this;
         var circleInc = (2 * Math.PI) / 8;//this.data.length;
 
+        if(this.currentRadians < 0) {
+            this.currentRadians = toRadians(355) - this.currentRadians;
+        }
 
         if(this.currentRadians > self.maxRadians) {
             this.currentRadians = this.currentRadians - self.maxRadians;
         }
-        else if (this.currentRadians < -self.maxRadians) {
-            this.currentRadians = this.currentRadians + self.maxRadians;
-        }
 
-        if(this.currentRadians > 1.5708 && this.currentRadians < 4.71239 - circleInc) {
-            this.currentRadians = (this.currentRadians - 1.5708) + 4.71239 - circleInc;
+        if(this.currentRadians > toRadians(90) && this.currentRadians < toRadians(270) - circleInc) {
+            if(self.rotateLastDir == 1)
+            {
+                this.currentRadians = (this.currentRadians - toRadians(90)) + toRadians(270) - circleInc;
+            }
+            else if(self.rotateLastDir == -1)
+            {
+                this.currentRadians = toRadians(90) - (this.currentRadians - (toRadians(270) - circleInc));
+            }
         }
-        /*else if (this.currentRadians < -1.5708 && this.currentRadians > -4.71239 - circleInc) {
-            this.currentRadians = (this.currentRadians + 1.5708) - 4.71239 - circleInc;
-        }*/
 
         var radians = this.currentRadians;
 		
@@ -128,16 +140,11 @@
             ];
 		
 		var scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.insideRadius)) - (startPosition[1] + (Math.sin(radians) * self.insideRadius))) / (self.radius*2.0);
-		scale = 1.2 - Math.abs(scale); 
-		
-		//scale = 1;
+		scale = 1.2 - Math.abs(scale);
 
         this.container.children("." + this.segmentCss).each(function() {
             if(radians > self.maxRadians) {
                 radians = radians - self.maxRadians;
-            }
-            else if (radians < -self.maxRadians) {
-                radians = radians + self.maxRadians;
             }
 
             $(this).height(self.segmentSelectedSize[0]);
@@ -153,21 +160,11 @@
 				'transform'         : 'scale(' + scale + ')'
             });
 
-            //console.log(radians);
-
             radians += circleInc;
 
-            //if(radians > 1.5708 && radians < -1.5708) {
-                
-            //}
 
-            if(radians > 1.5708 && radians < 4.71239 - circleInc) {
-                radians = (radians - 1.5708) + 4.71239 - circleInc;
-            }
-            else if(radians < -1.5708 - circleInc  && radians > -4.71239) {
-                //console.log((radians - (-1.5708 - circleInc)) + -4.71239);
-                //radians = (radians - (-1.5708 - circleInc)) + -4.71239;
-                console.log("YEP");
+            if(radians > toRadians(90) && radians < toRadians(270) - circleInc) {
+                radians = (radians - toRadians(90)) + toRadians(270) - circleInc;
             }
 			
             nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.insideRadius);
