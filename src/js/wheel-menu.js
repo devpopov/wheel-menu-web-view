@@ -20,6 +20,20 @@ function toRadians (angle) {
 		this.rotateLastPoint = [0,0];
 		this.rotateLastDir = -1;
 
+        this.visibleSegments = 5;
+        this.segmentsFromStartIndex = 2;
+        this.currentIndex = 0;
+        this.lastIndex = 0;
+        this.isFirstRefresh = true;
+
+        this.shiftsCount = 8;
+
+        this.needInc = false;
+
+        this.zeroSegment = 0;
+
+        this.visibleSegmentsArray = [];
+
         var self = this;
 
         $.each(WheelMenu.params, function(key, value) {
@@ -73,7 +87,7 @@ function toRadians (angle) {
 
 
         this.data.map(function(value) {
-            self.container.append("<div class=\"" + self.segmentCss + "\" id=\"" + value['id'] + "\">" + value['text'] + "</div>");
+            self.container.append("<div class=\"" + self.segmentCss + " visible\" id=\"" + value['id'] + "\">" + value['text'] + "</div>");
         });
 
         this.calculateMetrics();
@@ -86,6 +100,8 @@ function toRadians (angle) {
         this.insideRadius = this.radius - this.radius * 0.15;
 
         this.currentRadians = 0;
+
+        this.calculateInvisibleSegments();
 
         this.refresh();
 
@@ -104,12 +120,159 @@ function toRadians (angle) {
         this.segmentSelectedSize = [this.container.height() * 0.06, this.container.width() * 0.3];
     }
 
+    WheelMenu.prototype.setSegmentsVisible = function() {
+        var segments = this.container.children("." + this.segmentCss);
+        for(var iterator = 0; iterator < segments.length; iterator ++) {
+            $(segments[iterator]).removeClass('invisible');
+            $(segments[iterator]).addClass('visible');
+
+            $(segments[iterator]).show();
+        }
+    }
+
+    WheelMenu.prototype.calculateInvisibleSegments = function() {
+        this.visibleSegmentsArray = [];
+
+        var segments = this.container.children("." + this.segmentCss);
+
+        var hided = segments.length - this.visibleSegments;
+        var ending = this.segmentsFromStartIndex + hided + 1;
+        var invertedEnding = ending;
+
+        if(ending >= segments.length)
+        {
+            invertedEnding = this.segmentsFromStartIndex - hided - 1;
+        }
+
+        var zeroPosition = -1;
+
+        if(segments.length > this.visibleSegments) {
+            for(var iterator = 0; iterator < segments.length; iterator ++) {
+                if(ending >= segments.length)
+                {   
+                    if(iterator < this.segmentsFromStartIndex - this.visibleSegments + 1 || iterator > this.segmentsFromStartIndex)
+                    {
+                        $(segments[iterator]).removeClass("visible");
+                        $(segments[iterator]).addClass("invisible");
+
+                        $(segments[iterator]).hide();
+
+                        if(segments[iterator] == this.zeroSegment)
+                            zeroPosition = iterator;
+                    }
+                    else {
+                        this.visibleSegmentsArray.push(segments[iterator]);
+                    }
+                }
+                else if(iterator > this.segmentsFromStartIndex && iterator < ending) {
+                    $(segments[iterator]).removeClass("visible");
+                    $(segments[iterator]).addClass("invisible");
+
+                    $(segments[iterator]).hide();
+
+                    if(segments[iterator] == this.zeroSegment)
+                        zeroPosition = iterator;
+                }
+                else {
+                    this.visibleSegmentsArray.push(segments[iterator]);
+                }
+            }
+
+            if(zeroPosition != -1)
+            {
+                for(var iterator = zeroPosition + 1; iterator < segments.length; iterator ++) {
+                    if($(segments[iterator]).hasClass('visible')) {
+                        this.zeroSegment = segments[iterator];
+                        break;
+                    }
+
+                    if(iterator == segments.length - 1) {
+                        iterator = 0;
+                    }
+                }
+            }
+        }
+
+        zeroPosition = this.visibleSegmentsArray.indexOf(this.zeroSegment);
+
+        for(var iterator = 0; iterator < zeroPosition; iterator ++) {
+            var element = this.visibleSegmentsArray.shift();
+            this.visibleSegmentsArray.push(element);
+        }
+
+        //if($(this.visibleSegmentsArray[this.visibleSegmentsArray.length - 1]).attr('id') == segments.length - 1 && this.shiftsCount >= 4) {
+        //    this.shiftsCount = 5;
+        //    this.needInc = false;
+        //}
+
+        //if(this.shiftsCount == 0) {
+        //        this.shiftsCount = 5;
+        //    }
+
+        //if(this.shiftsCount != -1)
+        //{
+        //    for (iterator = 0; iterator < this.visibleSegments - this.shiftsCount; iterator ++) {
+        //        var element = this.visibleSegmentsArray.shift();
+        //        this.visibleSegmentsArray.push(element);
+       //     }
+            
+        //    this.shiftsCount --;
+
+        //}
+        //if(ending >= segments.length) {
+            //this.shiftsCount = 
+            /*for(var iterator = 0; iterator < segments.length - this.segmentsFromStartIndex - 1; iterator ++)
+            {
+                var element = this.visibleSegmentsArray.shift();
+                this.visibleSegmentsArray.push(element);
+            }*/
+        //}
+    }
+
     WheelMenu.prototype.refresh = function() {
+
+        
+
+        var segments = this.container.children("." + this.segmentCss);
+        
+        if(!this.isFirstRefresh) {
+            if(this.lastIndex != this.currentIndex) {
+                if(this.rotateLastDir == 1) {
+                    this.segmentsFromStartIndex --;
+
+                    if(this.segmentsFromStartIndex == -1) {
+                        this.segmentsFromStartIndex = segments.length - 1;
+                    }
+
+                    this.setSegmentsVisible();
+                    this.calculateInvisibleSegments();
+                    
+                }
+
+                if(this.rotateLastDir == -1) {
+                    this.segmentsFromStartIndex ++;
+
+                    if(this.segmentsFromStartIndex == 5) {
+                        this.segmentsFromStartIndex = 0;
+                    }
+
+                    this.setSegmentsVisible();
+                    this.calculateInvisibleSegments();
+                }
+            }
+            this.currentIndex = this.lastIndex;
+        }
+
+        segments = this.visibleSegmentsArray;
+
         var self = this;
         var circleInc = (2 * Math.PI) / 8;//this.data.length;
 
+        var wasLimit = false;
+
         if(this.currentRadians < 0) {
             this.currentRadians = toRadians(355) - this.currentRadians;
+            
         }
 
         if(this.currentRadians > self.maxRadians) {
@@ -142,36 +305,61 @@ function toRadians (angle) {
 		var scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.insideRadius)) - (startPosition[1] + (Math.sin(radians) * self.insideRadius))) / (self.radius*2.0);
 		scale = 1.2 - Math.abs(scale);
 
-        this.container.children("." + this.segmentCss).each(function() {
-            if(radians > self.maxRadians) {
-                radians = radians - self.maxRadians;
+        //this.container.children("." + this.segmentCss).each(function() {
+        for (var iterator = 0; iterator < segments.length; iterator ++) {
+            if (iterator == 0) {
+                //console.log($(segments[iterator]).attr('id'));
+                this.zeroSegment = segments[iterator];
             }
 
-            $(this).height(self.segmentSelectedSize[0]);
-            $(this).width(self.segmentSelectedSize[1]);
+            //if($(segments[iterator]).hasClass('visible')) {
+                if(radians > self.maxRadians) {
+                    radians = radians - self.maxRadians;
+                    //wasLimit = true;
+                }
 
-            $(this).css({
-                'left': nextPosition[0],
-                'top': nextPosition[1],
-				'-webkit-transform' : 'scale(' + scale + ')',
-				'-moz-transform'    : 'scale(' + scale + ')',
-				'-ms-transform'     : 'scale(' + scale + ')',
-				'-o-transform'      : 'scale(' + scale + ')',
-				'transform'         : 'scale(' + scale + ')'
-            });
+                $(segments[iterator]).height(self.segmentSelectedSize[0]);
+                $(segments[iterator]).width(self.segmentSelectedSize[1]);
 
-            radians += circleInc;
+                $(segments[iterator]).css({
+                    'left': nextPosition[0],
+                    'top': nextPosition[1],
+    				'-webkit-transform' : 'scale(' + scale + ')',
+    				'-moz-transform'    : 'scale(' + scale + ')',
+    				'-ms-transform'     : 'scale(' + scale + ')',
+    				'-o-transform'      : 'scale(' + scale + ')',
+    				'transform'         : 'scale(' + scale + ')'
+                });
 
+                radians += circleInc;
 
-            if(radians > toRadians(90) && radians < toRadians(270) - circleInc) {
-                radians = (radians - toRadians(90)) + toRadians(270) - circleInc;
-            }
-			
-            nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.insideRadius);
-            nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.insideRadius);
-			scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.insideRadius)) - (startPosition[1] + (Math.sin(radians) * self.insideRadius))) / (self.radius*2.0);
-			scale = 1.2 - Math.abs(scale); 
-        });
+                if(radians > toRadians(90) && radians < toRadians(270) - circleInc) {
+                    radians = (radians - toRadians(90)) + toRadians(270) - circleInc;
+
+                    
+
+                    this.lastIndex = $(segments[iterator]).attr('id');
+
+                    //if(!wasLimit)
+                    //{
+                    //    this.lastIndex = iterator;
+                    //}
+                    //else
+                    //    wasLimit = false;
+                }
+            
+                nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.insideRadius);
+                nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.insideRadius);
+                scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.insideRadius)) - (startPosition[1] + (Math.sin(radians) * self.insideRadius))) / (self.radius*2.0);
+                scale = 1.2 - Math.abs(scale);
+            //}
+        }
+
+        if(this.isFirstRefresh) {
+            this.currentIndex = this.lastIndex;
+            this.isFirstRefresh = false;
+        }
+        //});
     }
 	
 	
