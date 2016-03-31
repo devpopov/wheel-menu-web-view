@@ -50,7 +50,7 @@ function toRadians (angle) {
 
     WheelMenu.defaults = {
         position: "left",
-        radius: 250,
+        radius: 10,
         background: "green",
         data: [],
         segmentCss: "",
@@ -72,16 +72,23 @@ function toRadians (angle) {
         this.container.removeAttr('id class style');
         this.container.attr('id', 'wheel-menu');
 
+        this.radius = (this.radius * $(window).width()) / 100;
+        console.log(this.radius);
+
         this.container.css({
             height: this.radius * 2.0,
             width: this.radius * 2.0,
-            background: this.background
+            background: this.background,
+            'margin-left': -this.radius
         });
 
         this.container.append("<div id=\"wheel-menu-transparent\"></div>");
 
-        $('#wheel-menu-transparent').height(this.container.height());
-        $('#wheel-menu-transparent').width(this.container.width() / 3);
+        $('#wheel-menu-transparent').css({
+            height: this.container.height(),
+            width: this.container.width() / 3.0,
+            'margin-left': this.radius
+        });
 
         for (var iterator = 0; iterator < this.visibleSegments; iterator ++) {
             self.container.append("<div class=\"" + self.segmentCss + "\"></div>");
