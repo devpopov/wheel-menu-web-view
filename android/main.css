@@ -15,14 +15,17 @@ html, body {
     -ms-user-select: none;
     user-select: none;
 	cursor: default;
-    color: #d1d3d3;
+	height: 20%;
+	width: 20%;
+	color: #d1d3d3;
+	font-size: 30px;
 }
 
 #wheel-menu-transparent {
-    position: absolute;
-    background: -webkit-linear-gradient(right, rgba(22,53,74,1) 40%, rgba(22,53,74,0)); /* For Safari 5.1 to 6.0 */
+	position: absolute;
+	background: -webkit-linear-gradient(right, rgba(22,53,74,1) 40%, rgba(22,53,74,0)); /* For Safari 5.1 to 6.0 */
     background: -o-linear-gradient(right, rgba(22,53,74,1) 40%, rgba(22,53,74,0)); /* For Opera 11.1 to 12.0 */
     background: -moz-linear-gradient(right, rgba(22,53,74,1) 40%, rgba(22,53,74,0)); /* For Firefox 3.6 to 15 */
     background: linear-gradient(to right, rgba(22,53,74,1) 40%, rgba(22,53,74,0)); /* Standard syntax (must be last) */
-    z-index: 10;
+	z-index: 10;
 }

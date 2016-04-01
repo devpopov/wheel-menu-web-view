@@ -50,8 +50,7 @@ function toRadians (angle) {
 
     WheelMenu.defaults = {
         position: "left",
-        radius: 10,
-        background: "green",
+        radius: 20,
         data: [],
         segmentCss: "",
 		placeholderAngle: Math.PI - Math.PI/9.0
@@ -60,7 +59,6 @@ function toRadians (angle) {
     WheelMenu.params = {
         position: "string",
         radius: "number",
-        background: "string",
         data: "object",
         segmentCss: "string",
 		placeholderAngle: "number"
@@ -78,14 +76,13 @@ function toRadians (angle) {
         this.container.css({
             height: this.radius * 2.0,
             width: this.radius * 2.0,
-            background: this.background,
             'margin-left': -this.radius
         });
 
         this.container.append("<div id=\"wheel-menu-transparent\"></div>");
 
         $('#wheel-menu-transparent').css({
-            height: this.container.height(),
+            height: '100%',
             width: this.container.width() / 3.0,
             'margin-left': this.radius
         });
