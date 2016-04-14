@@ -16,6 +16,8 @@ function toRadians (angle) {
 		
 		this.currentSpeed = 0.0;
 		this.needToRotate = false;
+
+		this.activeElement = 0;
 		this.rotateLastPoint = [0,0];
 		this.rotateLastDir = 0;
 
@@ -53,7 +55,7 @@ function toRadians (angle) {
         radius: 20,
         data: [],
         segmentCss: "",
-		placeholderAngle: Math.PI - Math.PI/9.0
+		placeholderAngle: Math.PI - Math.PI/7.0
     }
 
     WheelMenu.params = {
@@ -71,7 +73,7 @@ function toRadians (angle) {
         this.container.attr('id', 'wheel-menu');
 
         this.radius = (this.radius * $(window).width()) / 100;
-        console.log(this.radius);
+        //console.log(this.radius);
 
         this.container.css({
             height: this.radius * 2.0,
@@ -161,15 +163,19 @@ function toRadians (angle) {
 		scale = 1.2 - Math.abs(scale);
 
         var notFirstTime = false;
-
+		
+		var haveActive = false;
+		
         for (var iterator = 0; iterator < segments.length; iterator ++) {
             if(radians > self.maxRadians) {
                 radians = radians - self.maxRadians;
             }
+			
+
 
             $(segments[iterator]).height(self.segmentSelectedSize[0]);
             $(segments[iterator]).width(self.segmentSelectedSize[1]);
-
+			$(segments[iterator]).css({color : '#d1d3d3'});
             $(segments[iterator]).css({
                 'left': nextPosition[0],
                 'top': nextPosition[1],
@@ -179,13 +185,26 @@ function toRadians (angle) {
     			'-o-transform'      : 'scale(' + scale + ')',
     			'transform'         : 'scale(' + scale + ')'
             });
+			if (scale > 1.1 ) {
+				if(!haveActive) {
+					haveActive = true;
+					this.activeElement = segments[iterator];
+					$(segments[iterator]).css({'color' : 'red'});
+				}
+				
+			}
 
             radians += circleInc;
+			
+
 
             if(radians > toRadians(90) && radians < toRadians(270) - circleInc) {
                 radians = (radians - toRadians(90)) + toRadians(270) - circleInc;
+				
+				
 
-                console.log(this.elementNearBorder);
+
+                //console.log(this.elementNearBorder);
 
                 if (this.elementNearBorder != iterator && !notFirstTime) {
                     this.elementNearBorder = iterator;
@@ -233,8 +252,13 @@ function toRadians (angle) {
             nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.insideRadius);
             nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.insideRadius);
             scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.insideRadius)) - (startPosition[1] + (Math.sin(radians) * self.insideRadius))) / (self.radius*2.0);
-            scale = 1.2 - Math.abs(scale);
+            scale = 1.5 - Math.abs(scale)*2.0;
+
+
         }
+		
+		
+
     }
 	
 	
@@ -244,13 +268,16 @@ function toRadians (angle) {
         var self = this;
 		
 		function applyAcceleration() {
-			if( !self.needToRotate && self.currentSpeed > 0.0) {
-				self.currentSpeed -= 0.001;
-				var circleInc = self.rotateLastDir * (8.5 / 360.0);
-				self.currentRadians += (circleInc * self.currentSpeed * 100);
-				self.refresh();
+			if( !self.needToRotate && self.needToSetPlaceholder) {
+				if(Math.abs(self.closestRad) > 0.0) {
+					//self.currentRadians += self.closestRad;
+					
+					//self.refresh();
+					//self.needToSetPlaceholder = false;
+					
+				}
 			}
-			setTimeout(applyAcceleration, 25);
+			setTimeout(applyAcceleration, 10);
 		}
 		applyAcceleration();
 		
@@ -261,13 +288,16 @@ function toRadians (angle) {
 			self.rotateLastPoint[0] = e_up.pageX;
 			self.rotateLastPoint[1] = e_up.pageY;
 			self.needToRotate = true;
+			
+
+			console.log(self.activeElement);
         });     
 		
 		$(document).bind("mousemove touchmove", function(e_move) {
 			if(!self.needToRotate) {
 				return;
 			}
-
+			
             var mmx = 0;
             var mmy = 0;
 
@@ -320,8 +350,10 @@ function toRadians (angle) {
 			}
 			
 			if(rotateNewDir == self.rotateLastDir) {
-				var circleInc = self.rotateLastDir * (8.5 / 360.0);
-				self.currentSpeed = Math.abs(circleInc);
+				//console.log(self.radius / 12000.0);
+				//console.log(8.5 / 360.0);
+				var circleInc = self.rotateLastDir * (7.0 / 360.0);
+				//self.currentSpeed = Math.abs(circleInc);
 				self.currentRadians += circleInc;
 				self.refresh();
 				self.rotateLastPoint[0] = mmx;
@@ -334,6 +366,7 @@ function toRadians (angle) {
 		
         $(document).bind("mouseup touchend", function(){
             self.needToRotate = false;
+			self.needToSetPlaceholder = true;
         });
     }
 
