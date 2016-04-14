@@ -290,7 +290,7 @@ function toRadians (angle) {
 			self.needToRotate = true;
 			
 
-			console.log(self.activeElement);
+			//console.log(self.activeElement);
         });     
 		
 		$(document).bind("mousemove touchmove", function(e_move) {
@@ -352,7 +352,7 @@ function toRadians (angle) {
 			if(rotateNewDir == self.rotateLastDir) {
 				//console.log(self.radius / 12000.0);
 				//console.log(8.5 / 360.0);
-				var circleInc = self.rotateLastDir * (7.0 / 360.0);
+				var circleInc = self.rotateLastDir * (7.5 / 360.0);
 				//self.currentSpeed = Math.abs(circleInc);
 				self.currentRadians += circleInc;
 				self.refresh();
