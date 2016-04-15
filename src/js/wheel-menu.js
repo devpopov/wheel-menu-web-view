@@ -36,6 +36,8 @@ function toRadians (angle) {
 
         var self = this;
 
+        this.catId = 0;
+
         $.each(WheelMenu.params, function(key, value) {
             if(key in params) {
                 if (typeof params[key] == value) {
@@ -55,7 +57,10 @@ function toRadians (angle) {
         radius: 20,
         data: [],
         segmentCss: "",
-		placeholderAngle: Math.PI - Math.PI/7.0
+		placeholderAngle: Math.PI - Math.PI/7.0,
+        unselectedColor: "#d1d3d3",
+        selectedColor: "#ef942c",
+        catIdFunction: undefined
     }
 
     WheelMenu.params = {
@@ -63,7 +68,10 @@ function toRadians (angle) {
         radius: "number",
         data: "object",
         segmentCss: "string",
-		placeholderAngle: "number"
+		placeholderAngle: "number",
+        unselectedColor: "string",
+        selectedColor: "string",
+        catIdFunction: "function"
     }
 
     WheelMenu.prototype.init = function() {
@@ -72,8 +80,12 @@ function toRadians (angle) {
         this.container.removeAttr('id class style');
         this.container.attr('id', 'wheel-menu');
 
-        this.radius = (this.radius * $(window).width()) / 100;
-        //console.log(this.radius);
+        if ($(window).width() < $(window).height()) {
+            this.radius = (this.radius * $(window).width()) / 100;
+        }
+        else {
+            this.radius = (this.radius * $(window).height()) / 100;
+        }
 
         this.container.css({
             height: this.radius * 2.0,
@@ -118,7 +130,8 @@ function toRadians (angle) {
             this.containerPosition[1] + this.container.height() / 2.0
         ];
 
-        this.segmentSelectedSize = [this.container.height() * 0.06, this.container.width() * 0.3];
+        //this.segmentSelectedSize = [this.container.height() * 0.06, this.container.width() * 0.3];
+        this.segmentSelectedSize = [this.container.height() * 0.09, this.container.width() * 0.5];
     }
 
     WheelMenu.prototype.refresh = function() {
@@ -175,7 +188,7 @@ function toRadians (angle) {
 
             $(segments[iterator]).height(self.segmentSelectedSize[0]);
             $(segments[iterator]).width(self.segmentSelectedSize[1]);
-			$(segments[iterator]).css({color : '#d1d3d3'});
+			$(segments[iterator]).css({color : self.unselectedColor});
             $(segments[iterator]).css({
                 'left': nextPosition[0],
                 'top': nextPosition[1],
@@ -183,16 +196,9 @@ function toRadians (angle) {
     			'-moz-transform'    : 'scale(' + scale + ')',
     			'-ms-transform'     : 'scale(' + scale + ')',
     			'-o-transform'      : 'scale(' + scale + ')',
-    			'transform'         : 'scale(' + scale + ')'
+    			'transform'         : 'scale(' + scale + ')',
+    			'font-size'         : ((self.segmentSelectedSize[1] / self.segmentSelectedSize[0]) * 3).toString() + 'px'
             });
-			if (scale > 1.1 ) {
-				if(!haveActive) {
-					haveActive = true;
-					this.activeElement = segments[iterator];
-					$(segments[iterator]).css({'color' : 'red'});
-				}
-				
-			}
 
             radians += circleInc;
 			
@@ -200,11 +206,6 @@ function toRadians (angle) {
 
             if(radians > toRadians(90) && radians < toRadians(270) - circleInc) {
                 radians = (radians - toRadians(90)) + toRadians(270) - circleInc;
-				
-				
-
-
-                //console.log(this.elementNearBorder);
 
                 if (this.elementNearBorder != iterator && !notFirstTime) {
                     this.elementNearBorder = iterator;
@@ -245,24 +246,41 @@ function toRadians (angle) {
 
                     shiftedSegments.map(function(segment, index) {
                         $(segment).html(spliced[index].text);
+                        $(segment).attr("segmentId", spliced[index].id);
                     });
                 }
+            }
+
+            if (scale > 1.1 ) {
+                if(!haveActive) {
+            	    haveActive = true;
+            		this.activeElement = segments[iterator];
+            		$(segments[iterator]).css({'color' : self.selectedColor});
+            		if($(segments[iterator]).attr("segmentId") != undefined)
+            		    self.catId = $(segments[iterator]).attr("segmentId");
+            	}
             }
             
             nextPosition[0] = startPosition[0] + (Math.cos(radians) * self.insideRadius);
             nextPosition[1] = startPosition[1] + (Math.sin(radians) * self.insideRadius);
             scale = ((startPosition[1] + (Math.sin(self.placeholderAngle) * self.insideRadius)) - (startPosition[1] + (Math.sin(radians) * self.insideRadius))) / (self.radius*2.0);
             scale = 1.5 - Math.abs(scale)*2.0;
-
-
         }
-		
-		
-
     }
 	
 	
-	
+	WheelMenu.prototype.rotate = function(self) {
+	    var circleInc = self.rotateLastDir * (10.5 / 360.0);
+	    this.currentRadians += circleInc;
+	    self.refresh();
+
+	    if (self.needToRotate)
+	    {
+            setTimeout(function() {
+                self.rotate(self);
+            }, 10);
+	    }
+	}
 
     WheelMenu.prototype.events = function() {
         var self = this;
@@ -277,97 +295,92 @@ function toRadians (angle) {
 					
 				}
 			}
-			setTimeout(applyAcceleration, 10);
+			setTimeout(applyAcceleration, 5);
 		}
 		applyAcceleration();
+
+        if( navigator.userAgent.match(/Android/i) )
+        {
+            $(document).bind("touchstart", function(e_up) {
+                self.needToRotate = true;
+
+                var touch = e_up.originalEvent.targetTouches[0];
+                var y = touch.pageY;
+
+                if(y < self.container.height() / 2.0) {
+                    self.rotateLastDir = -1;
+                }
+                else {
+                    self.rotateLastDir = 1;
+                }
+
+                self.rotate(self);
+            });
+		}
+		else {
+            self.container.children("div").bind("mousedown touchstart", function(e_up) {
+                var mx = e_up.pageX;
+                var my = e_up.pageY;
+                self.rotateLastPoint[0] = e_up.pageX;
+                self.rotateLastPoint[1] = e_up.pageY;
+                self.needToRotate = true;
+            });
+
+            $(document).bind("mousemove touchmove", function(e_move) {
+                if(!self.needToRotate) {
+                    return;
+                }
+
+                var mmx = 0;
+                var mmy = 0;
+
+                if(e_move.type == "mousemove")
+                {
+                    mmx = e_move.pageX;
+                    mmy = e_move.pageY;
+                }
+                else {
+                    var target = e_move.originalEvent.targetTouches[0];
+                    mmx = target.pageX;
+                    mmy = target.pageY;
+                }
+
+                var mx = self.rotateLastPoint[0];
+                var my = self.rotateLastPoint[1];
+                var rotateNewDir = 0;
+                if(mmy - my > 0.0) {
+                    rotateNewDir = 1;
+                } else {
+                    rotateNewDir = -1;
+                }
+
+                if(rotateNewDir == self.rotateLastDir) {
+                    //console.log(self.radius / 12000.0);
+                    //console.log(8.5 / 360.0);
+                    var circleInc = self.rotateLastDir * (7.5 / 360.0);
+                    if( navigator.userAgent.match(/Android/i) ) {
+                        circleInc = self.rotateLastDir * (12.5 / 360.0);
+                    }
+                    //self.currentSpeed = Math.abs(circleInc);
+                    self.currentRadians += circleInc;
+                    self.refresh();
+                    self.rotateLastPoint[0] = mmx;
+                    self.rotateLastPoint[1] = mmy;
+                }
+
+                self.rotateLastDir = rotateNewDir;
+
+            });
+		}
 		
-
-        self.container.children("div").bind("mousedown touchstart", function(e_up) {
-            var mx = e_up.pageX;
-            var my = e_up.pageY;
-			self.rotateLastPoint[0] = e_up.pageX;
-			self.rotateLastPoint[1] = e_up.pageY;
-			self.needToRotate = true;
-			
-
-			//console.log(self.activeElement);
-        });     
-		
-		$(document).bind("mousemove touchmove", function(e_move) {
-			if(!self.needToRotate) {
-				return;
-			}
-			
-            var mmx = 0;
-            var mmy = 0;
-
-            if(e_move.type == "mousemove")
-            {
-                mmx = e_move.pageX;
-                mmy = e_move.pageY;
-            }
-            else {
-                var target = e_move.originalEvent.targetTouches[0];
-                mmx = target.pageX;
-                mmy = target.pageY;
-            }
-
-			var mx = self.rotateLastPoint[0];
-            var my = self.rotateLastPoint[1];
-			var rotateNewDir = 0;
-			if(mmy - my > 0.0) {
-				rotateNewDir = 1;
-				
-			} else {
-				rotateNewDir = -1;
-			}
-
-			if((mmx > mx && mmy == my && mmy < self.containerMiddlePoint[1]) ||
-				(mmx > mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
-				(mmx == mx && mmy > my && mmx > self.containerMiddlePoint[0]) ||
-				(mmx < mx && mmy > my && mmy > self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
-				(mmx < mx && mmy == my && mmy > self.containerMiddlePoint[1]) ||
-				(mmx < mx && mmy < my && mmy > self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]) ||
-				(mmx == mx && mmy < my && mmx < self.containerMiddlePoint[0]) ||
-				(mmx > mx && mmy < my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]))
-			{
-
-				
-
-			}
-			else if ((mmx < mx && mmy == my && mmy < self.containerMiddlePoint[1]) ||
-				(mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
-				(mmx == mx && mmy < my && mmx > self.containerMiddlePoint[0]) ||
-				(mmx > mx && mmy < my && mmy > self.containerMiddlePoint[1] && mmx > self.containerMiddlePoint[0]) ||
-				(mmx > mx && mmy == my && mmy > self.containerMiddlePoint[1]) ||
-				(mmx > mx && mmy > my && mmy > self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0]) ||
-				(mmx == mx && mmy > my && mmx < self.containerMiddlePoint[0]) ||
-				(mmx < mx && mmy > my && mmy < self.containerMiddlePoint[1] && mmx < self.containerMiddlePoint[0])) {
-
-			
-
-	
-			}
-			
-			if(rotateNewDir == self.rotateLastDir) {
-				//console.log(self.radius / 12000.0);
-				//console.log(8.5 / 360.0);
-				var circleInc = self.rotateLastDir * (7.5 / 360.0);
-				//self.currentSpeed = Math.abs(circleInc);
-				self.currentRadians += circleInc;
-				self.refresh();
-				self.rotateLastPoint[0] = mmx;
-				self.rotateLastPoint[1] = mmy;
-			}
-
-			self.rotateLastDir = rotateNewDir;
-
-		});
-		
-        $(document).bind("mouseup touchend", function(){
+        $(document).bind("mouseup touchend", function(e_down){
             self.needToRotate = false;
 			self.needToSetPlaceholder = true;
         });
+    }
+
+    WheelMenu.prototype.getCatId = function() {
+        this.catIdFunction(this.catId);
     }
 
     WheelMenu.prototype.generateElements = function() {
@@ -376,5 +389,6 @@ function toRadians (angle) {
 
     $.fn.wheelMenu = function(params) {
         o = new WheelMenu(this, params);
+        return o;
     };
 }(jQuery, window));
