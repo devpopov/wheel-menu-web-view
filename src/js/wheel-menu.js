@@ -258,6 +258,9 @@ function toRadians (angle) {
             		$(segments[iterator]).css({'color' : self.selectedColor});
             		if($(segments[iterator]).attr("segmentId") != undefined)
             		    self.catId = $(segments[iterator]).attr("segmentId");
+            		else {
+            		    self.catId = this.data[iterator].id;
+            		}
             	}
             }
             
